@@ -201,9 +201,9 @@ Resources:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: Security group for all nodes in the cluster
-      VpcId: !Ref VpcId
+      VpcId: vpc-57a81e3c
       Tags:
-        - Key: !Sub kubernetes.io/cluster/${ClusterName}
+        - Key: !Sub kubernetes.io/cluster/production
           Value: owned
 
   NodeSecurityGroupIngress:
@@ -223,7 +223,7 @@ Resources:
     Properties:
       Description: Allow worker Kubelets and pods to receive communication from the cluster control plane
       GroupId: !Ref NodeSecurityGroup
-      SourceSecurityGroupId: !Ref ClusterControlPlaneSecurityGroup
+      SourceSecurityGroupId: sg-0ba223951cbce1d3c
       IpProtocol: tcp
       FromPort: 1025
       ToPort: 65535
@@ -233,7 +233,7 @@ Resources:
     DependsOn: NodeSecurityGroup
     Properties:
       Description: Allow the cluster control plane to communicate with worker Kubelet and pods
-      GroupId: !Ref ClusterControlPlaneSecurityGroup
+      GroupId: sg-0ba223951cbce1d3c
       DestinationSecurityGroupId: !Ref NodeSecurityGroup
       IpProtocol: tcp
       FromPort: 1025
@@ -245,7 +245,7 @@ Resources:
     Properties:
       Description: Allow pods running extension API servers on port 443 to receive communication from cluster control plane
       GroupId: !Ref NodeSecurityGroup
-      SourceSecurityGroupId: !Ref ClusterControlPlaneSecurityGroup
+      SourceSecurityGroupId: sg-0ba223951cbce1d3c
       IpProtocol: tcp
       FromPort: 443
       ToPort: 443
@@ -255,7 +255,7 @@ Resources:
     DependsOn: NodeSecurityGroup
     Properties:
       Description: Allow the cluster control plane to communicate with pods running extension API servers on port 443
-      GroupId: !Ref ClusterControlPlaneSecurityGroup
+      GroupId: sg-0ba223951cbce1d3c
       DestinationSecurityGroupId: !Ref NodeSecurityGroup
       IpProtocol: tcp
       FromPort: 443
@@ -266,7 +266,7 @@ Resources:
     DependsOn: NodeSecurityGroup
     Properties:
       Description: Allow pods to communicate with the cluster API Server
-      GroupId: !Ref ClusterControlPlaneSecurityGroup
+      GroupId: sg-0ba223951cbce1d3c
       SourceSecurityGroupId: !Ref NodeSecurityGroup
       IpProtocol: tcp
       ToPort: 443
@@ -279,12 +279,12 @@ Resources:
       LaunchConfigurationName: !Ref NodeLaunchConfig
       MinSize: !Ref NodeAutoScalingGroupMinSize
       MaxSize: !Ref NodeAutoScalingGroupMaxSize
-      VPCZoneIdentifier: !Ref Subnets
+      VPCZoneIdentifier: subnet-0c1d7594e542b9141
       Tags:
         - Key: Name
-          Value: !Sub ${ClusterName}-${NodeGroupName}-Node
+          Value: !Sub production-WorkerNodes-Node
           PropagateAtLaunch: true
-        - Key: !Sub kubernetes.io/cluster/${ClusterName}
+        - Key: !Sub kubernetes.io/cluster/production
           Value: owned
           PropagateAtLaunch: true
     UpdatePolicy:
@@ -298,9 +298,9 @@ Resources:
     Properties:
       AssociatePublicIpAddress: true
       IamInstanceProfile: !Ref NodeInstanceProfile
-      ImageId: !Ref NodeImageId
+      ImageId: ami-0dd9f0e7df0f0a138
       InstanceType: !Ref NodeInstanceType
-      KeyName: !Ref KeyName
+      KeyName: udacity-capstone
       SecurityGroups:
         - !Ref NodeSecurityGroup
       BlockDeviceMappings:
@@ -314,7 +314,7 @@ Resources:
           !Sub |
             #!/bin/bash
             set -o xtrace
-            /etc/eks/bootstrap.sh ${ClusterName} ${BootstrapArguments}
+            /etc/eks/bootstrap.sh production ${BootstrapArguments}
             /opt/aws/bin/cfn-signal --exit-code $? \
                      --stack  ${AWS::StackName} \
                      --resource NodeGroup  \
